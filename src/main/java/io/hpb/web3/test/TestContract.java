@@ -1,22 +1,15 @@
 package io.hpb.web3.test;
 
-import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import io.hpb.web3.contract.UFOToken;
-import io.hpb.web3.crypto.Credentials;
 import io.hpb.web3.protocol.Web3Service;
 import io.hpb.web3.protocol.admin.Admin;
 import io.hpb.web3.protocol.http.HttpService;
 import io.hpb.web3.protocol.ipc.UnixIpcService;
 import io.hpb.web3.protocol.ipc.WindowsIpcService;
-import io.hpb.web3.tx.ChainIdLong;
-import io.hpb.web3.tx.RawTransactionManager;
-import io.hpb.web3.tx.gas.StaticGasProvider;
-import io.hpb.web3.utils.Convert;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 
@@ -24,8 +17,10 @@ public class TestContract {
 	private static Log log = LogFactory.getLog(TestContract.class);
 	private static final long WEB3_TIMEOUT = 3;
 	public static void main(String[] args) throws Exception {
-		Admin admin=admin("https://192.168.0.121:8545/");
-		Credentials credentials=Credentials.create("**************************************************");
+		Admin admin=admin("http://192.168.0.121:8545/");
+		String netVersion = admin.netVersion().send().getNetVersion();
+		System.out.println(netVersion);
+		/*Credentials credentials=Credentials.create("**************************************************");
 		RawTransactionManager transactionManager=new RawTransactionManager(admin, credentials, ChainIdLong.MAINNET);
 		BigInteger gasPrice = Convert.toWei("18", Convert.Unit.GWEI).toBigInteger();
 		BigInteger gasLimit = new BigInteger("7500000");
@@ -33,7 +28,15 @@ public class TestContract {
 		UFOToken token = UFOToken.load("0xfbbe0ba33812b531aced666d0bb2450216c11d11", admin, transactionManager, contractGasProvider);
 		BigInteger bigInteger = token.balanceOf("0xfbbe0ba33812b531aced666d0bb2450216c11d11").send();
 		System.out.println(bigInteger);
+		String transactionHash="";
+		HpbGetTransactionReceipt transactionReceipt =
+	             admin.hpbGetTransactionReceipt(transactionHash).send();
 
+		if (transactionReceipt.getTransactionReceipt().isPresent()) {
+		   // String contractAddress = transactionReceipt.getResult().getContractAddress();
+		} else {
+		    // try again
+		}*/
 	}
 	public static Admin admin(String clientAddress) {
 		Web3Service web3jService = buildService(clientAddress);

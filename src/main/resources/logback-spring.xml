@@ -4,7 +4,7 @@
 	<contextName>HpbWeb3Test</contextName>
 	<!-- appid -->
 	<property name="APP_ID" value="HpbWeb3Test" />
-	<property name="LOG_PATH" value="/Users/hpb2017/logs/"></property>
+	<property name="LOG_PATH" value="logs"></property>
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} %caller{1} - %msg%n</pattern>
