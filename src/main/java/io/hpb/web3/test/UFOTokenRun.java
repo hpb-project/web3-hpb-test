@@ -33,7 +33,10 @@ public class UFOTokenRun {
 	// Public Node of HPB Main Network
 	private static String blockChainUrl = "http://mainnet.hpb.io/";
 
-	private static StaticGasProvider staticGasProvider=new StaticGasProvider(Convert.toWei("18", Convert.Unit.GWEI),  Convert.toWei("99000000", Convert.Unit.HPB));
+	private static StaticGasProvider staticGasProvider=new StaticGasProvider(
+			Convert.toWei("18", Convert.Unit.GWEI).toBigInteger(),  
+			Convert.toWei("99000000", Convert.Unit.HPB).toBigInteger());
+	
 	public static void main(String[] args) {
 
 		String packageName = "io.hpb.web3.contract";
