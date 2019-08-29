@@ -2,6 +2,7 @@ package io.hpb.web3.controller;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -13,12 +14,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.hpb.web3.contract.HpbNodes;
+import io.hpb.web3.abi.FunctionEncoder;
+import io.hpb.web3.abi.FunctionReturnDecoder;
+import io.hpb.web3.abi.TypeReference;
+import io.hpb.web3.abi.datatypes.Address;
+import io.hpb.web3.abi.datatypes.DynamicArray;
+import io.hpb.web3.abi.datatypes.Function;
+import io.hpb.web3.abi.datatypes.Type;
+import io.hpb.web3.abi.datatypes.generated.Bytes32;
 import io.hpb.web3.crypto.Credentials;
 import io.hpb.web3.crypto.RawTransaction;
 import io.hpb.web3.crypto.WalletUtils;
 import io.hpb.web3.protocol.admin.Admin;
 import io.hpb.web3.protocol.core.DefaultBlockParameterName;
+import io.hpb.web3.protocol.core.DefaultBlockParameterNumber;
+import io.hpb.web3.protocol.core.methods.request.Transaction;
 import io.hpb.web3.protocol.core.methods.response.HpbBlockNumber;
 import io.hpb.web3.protocol.core.methods.response.HpbGetBalance;
 import io.hpb.web3.protocol.core.methods.response.HpbGetTransactionCount;
@@ -28,9 +38,7 @@ import io.hpb.web3.protocol.core.methods.response.TransactionReceipt;
 import io.hpb.web3.tuples.generated.Tuple4;
 import io.hpb.web3.tx.ChainIdLong;
 import io.hpb.web3.tx.RawTransactionManager;
-import io.hpb.web3.tx.gas.StaticGasProvider;
 import io.hpb.web3.utils.Convert;
-import io.hpb.web3.utils.Numeric;
 import io.swagger.annotations.ApiOperation;
 
 @RestController
@@ -69,7 +77,7 @@ public class HpbWeb3Controller{
 		return list;
 	}
 	@ApiOperation(value="Obtaining the current account Nonce",notes = " "
-			+ " reqStrList [ Parameter1：Account address;")
+			+ " reqStrList [ Parameter1：Account address;]")
 	@PostMapping("/getCurrentNonce")
 	public List<Object> getCurrentNonce(@RequestBody List<String> reqStrList)throws Exception{
 		List<Object> list=new ArrayList<Object>();
@@ -124,29 +132,38 @@ public class HpbWeb3Controller{
 		}
 		return list;
 	}
-	@ApiOperation(value="Call HpbNodes Smart Contract",notes = ""
-			+ " reqStrList [ Parameter1：Account keystore address; Parameter2：Password]")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@ApiOperation(value="Call HpbNodes Smart Contract",notes = ""+ " reqStrList [ Parameter1：BlockParameter;]")
 	@PostMapping("/invokeHpbNodes")
 	public List<Object> invokeHpbNodes(@RequestBody List<String> reqStrList)throws Exception{
 		List<Object> list=new ArrayList<Object>();
-		if(reqStrList!=null&&reqStrList.size()>1) {
-			String keystore =reqStrList.get(0);
-			String password =reqStrList.get(1);
-			Credentials credentials = WalletUtils.loadCredentials(password, keystore);
-			RawTransactionManager transactionManager=new RawTransactionManager(admin, credentials, ChainIdLong.MAINNET);
-			HpbNodes hpbNodes = HpbNodes.load(contractAddr, admin, transactionManager,new StaticGasProvider(gasPrice, gasLimit));
-			//Call HpbNodes Smart Contract
-			Tuple4<List<String>, List<byte[]>, List<byte[]>, List<byte[]>> send = 
-					hpbNodes.getAllHpbNodes().send();
-			byte[] bytes32 = send.getValue2().get(1);
-			log.info(Numeric.toHexStringNoPrefix(bytes32));
-			byte[] bytes321 = send.getValue3().get(1);
-			log.info(Numeric.toHexStringNoPrefix(bytes321));
-			byte[] bytes322 = send.getValue4().get(1);
-			log.info(Numeric.toHexStringNoPrefix(bytes322));
-			list.add(send);
-		}
+		final Function function = new Function("getAllHpbNodes", 
+                Arrays.<Type>asList(), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Address>>() {}, 
+                		new TypeReference<DynamicArray<Bytes32>>() {}, 
+                		new TypeReference<DynamicArray<Bytes32>>() {}, 
+                		new TypeReference<DynamicArray<Bytes32>>() {}));
+		String encodedFunction = FunctionEncoder.encode(function);
+		String value = admin.hpbCall(
+                Transaction.createHpbCallTransaction(contractAddr, contractAddr, encodedFunction),
+                new DefaultBlockParameterNumber(new BigInteger(reqStrList.get(0))))
+        .send()
+        .getValue();
+		List<Type> results = FunctionReturnDecoder.decode(value, function.getOutputParameters());
+        Tuple4<List<String>, List<byte[]>, List<byte[]>, List<byte[]>> tuple4 = new Tuple4<List<String>, List<byte[]>, List<byte[]>, List<byte[]>>(
+                convertToNative((List<Address>) results.get(0).getValue()), 
+                convertToNative((List<Bytes32>) results.get(1).getValue()), 
+                convertToNative((List<Bytes32>) results.get(2).getValue()), 
+                convertToNative((List<Bytes32>) results.get(3).getValue()));
+		list.add(tuple4);
 		return list;
 	}
-	
+	@SuppressWarnings("unchecked")
+	protected static <S extends Type<?>, T> List<T> convertToNative(List<S> arr) {
+        List<T> out = new ArrayList<>();
+        for (final S s : arr) {
+            out.add((T) s.getValue());
+        }
+        return out;
+    }
 }

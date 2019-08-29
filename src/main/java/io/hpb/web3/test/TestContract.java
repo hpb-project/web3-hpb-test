@@ -1,9 +1,11 @@
 package io.hpb.web3.test;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.shared.utils.io.FileUtils;
 
 import io.hpb.web3.protocol.Web3Service;
 import io.hpb.web3.protocol.admin.Admin;
@@ -17,26 +19,19 @@ public class TestContract {
 	private static Log log = LogFactory.getLog(TestContract.class);
 	private static final long WEB3_TIMEOUT = 3;
 	public static void main(String[] args) throws Exception {
-		Admin admin=admin("http://192.168.0.121:8545/");
-		String netVersion = admin.netVersion().send().getNetVersion();
-		System.out.println(netVersion);
-		/*Credentials credentials=Credentials.create("**************************************************");
-		RawTransactionManager transactionManager=new RawTransactionManager(admin, credentials, ChainIdLong.MAINNET);
-		BigInteger gasPrice = Convert.toWei("18", Convert.Unit.GWEI).toBigInteger();
-		BigInteger gasLimit = new BigInteger("7500000");
-		StaticGasProvider contractGasProvider=new StaticGasProvider(gasPrice,gasLimit);
-		UFOToken token = UFOToken.load("0xfbbe0ba33812b531aced666d0bb2450216c11d11", admin, transactionManager, contractGasProvider);
-		BigInteger bigInteger = token.balanceOf("0xfbbe0ba33812b531aced666d0bb2450216c11d11").send();
-		System.out.println(bigInteger);
-		String transactionHash="";
-		HpbGetTransactionReceipt transactionReceipt =
-	             admin.hpbGetTransactionReceipt(transactionHash).send();
-
-		if (transactionReceipt.getTransactionReceipt().isPresent()) {
-		   // String contractAddress = transactionReceipt.getResult().getContractAddress();
-		} else {
-		    // try again
-		}*/
+		String filePath="D:\\ethWeb3j\\web3-hpb\\src\\main\\java\\io\\hpb\\web3\\protocol\\core\\methods\\response\\";
+		File f=new File(filePath);
+		File[] listFiles = f.listFiles();
+		for(File ff:listFiles) {
+			String name = ff.getName();
+			System.out.println(name);
+			if(name.indexOf("Eth")>-1) {
+				String replace = name.replace("Eth", "Hpb");
+				String replace2 = ff.getAbsolutePath().replace(name,replace);
+				System.out.println(replace2);
+				ff.renameTo(new File(replace2));
+			}	
+		}
 	}
 	public static Admin admin(String clientAddress) {
 		Web3Service web3jService = buildService(clientAddress);
